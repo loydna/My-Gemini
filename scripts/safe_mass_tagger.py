@@ -113,10 +113,17 @@ def main():
             print(f"Skipping symlink: {target}")
             continue
 
-        # Path traversal protection: resolve absolute path and ensure it's within CWD
-        abs_target = os.path.abspath(target)
-        abs_cwd = os.path.abspath(os.getcwd())
-        if not abs_target.startswith(abs_cwd):
+        # Path traversal protection: resolve realpath to defeat symlink bypasses
+        # Use os.path.commonpath instead of startswith to prevent prefix spoofing (e.g. /app vs /app-spoof)
+        real_target = os.path.realpath(target)
+        real_cwd = os.path.realpath(os.getcwd())
+
+        try:
+            if os.path.commonpath([real_cwd, real_target]) != real_cwd:
+                print(f"Security Error: Target '{target}' resolves outside the current working directory. Skipping.")
+                continue
+        except ValueError:
+            # commonpath raises ValueError if paths are on different drives (Windows) or otherwise incomparable
             print(f"Security Error: Target '{target}' resolves outside the current working directory. Skipping.")
             continue
 

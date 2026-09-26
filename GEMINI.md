@@ -6,7 +6,17 @@ The canonical contract and its core constitutional rules reside in `contracts/GE
 
 ## Integration for Gemini CLI
 
-When using a Gemini CLI tool pointing at this repository, the CLI must parse and inject this doctrine as system instructions prior to evaluating any factual claims regarding the repository's contents.
+When using a Gemini CLI tool pointing at this repository, you must explicitly import the verification contract rules as context for the session.
+
+Example using context import:
+```bash
+gemini chat --context @contracts/GEMINI-VERIFICATION-CONTRACT/CORE.md
+```
+
+You can verify the rules have been loaded by inspecting the active memory:
+```bash
+gemini /memory show
+```
 
 ## Integration for Gemini Apps (Gems)
 

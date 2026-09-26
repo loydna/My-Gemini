@@ -91,22 +91,27 @@ def validate_candidate_response_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # Check that a verdict is properly formatted on its own line and not inside quotes
     lines = content.split('\n')
     verdict_line = None
+    date_line = None
+
+    # Strict regex for start of line to prevent blockquote bypassing
+    verdict_regex = re.compile(r"^VERDICT:\s+(VERIFIED|PARTIALLY VERIFIED|UNVERIFIED|CONTRADICTED)$")
+    date_regex = re.compile(r"^Date:\s+\d{4}-\d{2}-\d{2}$")
+
     for line in lines:
-        if line.strip().startswith("VERDICT:"):
-            verdict_line = line.strip()
-            break
+        # Strict checking without aggressive stripping that hides blockquotes
+        if verdict_regex.match(line):
+            verdict_line = line
+        if date_regex.match(line):
+            date_line = line
 
     if not verdict_line:
-        print("Validation Failed: Missing VERDICT: line. Cannot be a bare word or inside a quote.")
+        print("Validation Failed: Missing or invalid VERDICT: line. Must be exactly 'VERDICT: <STATUS>' at the start of a line.")
         return False
 
-    verdicts = ["VERIFIED", "PARTIALLY VERIFIED", "UNVERIFIED", "CONTRADICTED"]
-    has_valid_verdict = any(v in verdict_line for v in verdicts)
-    if not has_valid_verdict:
-        print(f"Validation Failed: Invalid verdict in line '{verdict_line}'")
+    if not date_line:
+        print("Validation Failed: Missing or invalid Date: line. Must be exactly 'Date: YYYY-MM-DD' at the start of a line.")
         return False
 
     # Heuristic for evidence
