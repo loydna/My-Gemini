@@ -2,7 +2,7 @@ import os
 import argparse
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 MARKDOWN_TAG = """\n<!-- GEMINI-VERIFICATION-METADATA:BEGIN
 contract: GEMINI-VERIFICATION-CONTRACT
@@ -11,6 +11,27 @@ verification_status: null
 verified_at: null
 evidence: []
 GEMINI-VERIFICATION-METADATA:END -->\n"""
+
+# Paths that should NEVER be tagged by the mass tagger
+PROTECTED_PATHS = [
+    os.path.normpath("contracts/GEMINI-VERIFICATION-CONTRACT/CORE.md"),
+    os.path.normpath("contracts/GEMINI-VERIFICATION-CONTRACT/AMENDMENTS.md"),
+    os.path.normpath("contracts/GEMINI-VERIFICATION-CONTRACT/VERSION.yaml"),
+]
+
+def is_protected_path(filepath):
+    normalized = os.path.normpath(filepath)
+    # Check exact match for protected files
+    for protected in PROTECTED_PATHS:
+        if normalized.endswith(protected):
+            return True
+
+    # Explicitly exclude secrets/keys by heuristic
+    lower_path = normalized.lower()
+    if "secret" in lower_path or "key" in lower_path or "token" in lower_path:
+        return True
+
+    return False
 
 def get_file_hash(filepath):
     hasher = hashlib.sha256()
@@ -50,7 +71,7 @@ def process_structured_file(filepath, dry_run=True):
                     pass
 
     metadata_record = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "file_path": filepath,
         "content_hash": file_hash,
         "contract": "GEMINI-VERIFICATION-CONTRACT",
@@ -68,7 +89,7 @@ def process_structured_file(filepath, dry_run=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Safe Mass-Tagging Script for Gemini Verification")
-    parser.add_argument("target", help="Directory or file to process")
+    parser.add_argument("target", nargs='+', help="Specific files to process. Directories are no longer accepted to prevent unintended mass modifications.")
     parser.add_argument("--apply", action="store_true", help="Apply changes. If not set, runs in dry-run mode.")
     args = parser.parse_args()
 
@@ -77,23 +98,40 @@ def main():
     if dry_run:
         print("=== DRY RUN MODE === No files will be modified.")
 
-    if not os.path.exists(args.target):
-        print(f"Error: Target '{args.target}' does not exist.")
-        return
-
     files_to_process = []
-    if os.path.isfile(args.target):
-        files_to_process.append(args.target)
-    else:
-        for root, dirs, files in os.walk(args.target):
-            # Explicitly skip hidden directories like .git
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
-            if "venv" in dirs:
-                dirs.remove("venv")
 
-            for file in files:
-                if file.endswith((".md", ".json", ".csv")):
-                    files_to_process.append(os.path.join(root, file))
+    for target in args.target:
+        if not os.path.exists(target):
+            print(f"Error: Target '{target}' does not exist.")
+            continue
+
+        if os.path.isdir(target):
+            print(f"Error: Target '{target}' is a directory. Please specify explicit files to tag.")
+            continue
+
+        if os.path.islink(target):
+            print(f"Skipping symlink: {target}")
+            continue
+
+        # Path traversal protection: resolve absolute path and ensure it's within CWD
+        abs_target = os.path.abspath(target)
+        abs_cwd = os.path.abspath(os.getcwd())
+        if not abs_target.startswith(abs_cwd):
+            print(f"Security Error: Target '{target}' resolves outside the current working directory. Skipping.")
+            continue
+
+        if is_protected_path(target):
+            print(f"Skipping protected path/secret: {target}")
+            continue
+
+        if target.endswith(".verification.jsonl"):
+            print(f"Skipping generated sidecar: {target}")
+            continue
+
+        if target.endswith((".md", ".json", ".csv")):
+            files_to_process.append(target)
+        else:
+             print(f"Skipping unsupported file type: {target}")
 
     stats = {"scanned": len(files_to_process), "modified": 0, "skipped": 0, "failed": 0}
     errors = []
@@ -120,7 +158,7 @@ def main():
 
     print("\n=== Summary ===")
     print(f"Mode: {'DRY RUN' if dry_run else 'APPLY'}")
-    print(f"Scanned:  {stats['scanned']}")
+    print(f"Explicit Files Scanned: {stats['scanned']}")
     print(f"Modified: {stats['modified']}")
     print(f"Skipped:  {stats['skipped']} (already tagged)")
     print(f"Failed:   {stats['failed']}")
