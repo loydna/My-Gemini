@@ -1,6 +1,16 @@
-# 📚 Agentic Design Patterns - A Hands-On Guide to Building Intelligent Systems
+# 📚 Agentic Design Patterns & Gemini Verification Contract
 
 [![Book](https://img.shields.io/badge/Book-Pre--order-blue)](https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018/)
+
+## 🛡️ Gemini Verification Contract Status
+
+This repository enforces an immutable, versioned verification doctrine (`GEMINI-VERIFICATION-CONTRACT`) designed to govern how AI agents (specifically Gemini) evaluate claims about code, models, and states. It prohibits AI from asserting that something "does not exist" based on stale internal knowledge.
+
+**Current Status:** The core contract rules, offline test fixtures, automated compliance test runner, and a secure mass-tagging script have been established under `contracts/GEMINI-VERIFICATION-CONTRACT/` and `scripts/`. These enforce epistemic humility and mandate external retrieval for all factual verifications. See `GEMINI.md` for information on integrating these rules into Gemini CLI or Gemini Apps.
+
+---
+
+## 📖 About This Repository
 [![Author](https://img.shields.io/badge/Author-Antonio%20Gulli-green)](https://www.linkedin.com/in/searchguy/)
 [![Charity](https://img.shields.io/badge/Royalties-Save%20the%20Children-red)](https://www.savethechildren.org/)
 [![License](https://img.shields.io/badge/License-Educational-yellow)]()
