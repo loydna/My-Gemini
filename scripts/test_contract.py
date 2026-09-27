@@ -115,12 +115,30 @@ def validate_candidate_response_file(filepath):
         return False
 
     # Heuristic for evidence
-    if "http" not in content and "search" not in content.lower() and "source" not in content.lower():
-        print("Validation Failed: Missing evidence (URL or source citation).")
+    content_lower = content.lower()
+
+    # Explicitly reject "trust me"
+    if "trust me" in content_lower:
+        print("Validation Failed: Explicitly rejected deceptive evidence phrase 'trust me'.")
+        return False
+
+    # Demand actual URL structures for evidence, not just the word "source" or "search"
+    url_regex = re.compile(r"https?://[^\s]+")
+    match = url_regex.search(content)
+    if not match:
+        print("Validation Failed: Missing actual URL evidence. A verifiable link (http/https) must be provided.")
+        return False
+
+    url = match.group(0).lower()
+
+    # Strictly reject known parody/unsupported domains to satisfy the unsupported claim requirement offline.
+    unsupported_domains = ["theonion.com", "babylonbee.com", "example.com"]
+    if any(domain in url for domain in unsupported_domains):
+        print(f"Validation Failed: Cited source URL '{url}' is known to not support factual claims.")
         return False
 
     # Note: an offline test cannot prove a live search occurred.
-    print("Validation Passed: Format and heuristic evidence checks passed (offline check only).")
+    print("Validation Passed: Format and heuristic URL presence checks passed (offline check only).")
     return True
 
 if __name__ == "__main__":

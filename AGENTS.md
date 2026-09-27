@@ -1,7 +1,14 @@
-# Agentic Design Patterns — Agent Guide
+# Agentic Design Patterns & Gemini Verification Contract — Agent Guide
 
-A skill library derived from "Agentic Design Patterns" (21 chapters).
+A skill library derived from "Agentic Design Patterns" (21 chapters) and the immutable Gemini Verification Contract.
 Each chapter -> one self-contained skill in `skills/`.
+
+## Gemini Verification Contract: Acceptance & Execution Rules
+When working in this repository on tasks related to factual claims, contract validation, or model output generation, all agents (including Jules) MUST adhere to the following workflow:
+1. **List Assumptions:** Explicitly state any assumptions regarding the environment, the models, or the historical timeline.
+2. **Identify Sources:** For every factual claim, provide a verifiable source link (e.g., a URL to a first-party announcement). Do NOT self-certify or claim you "searched" without providing the specific URL.
+3. **Try a Counterexample:** Actively construct deceptive or adversarial test cases (e.g., a response that claims "source: trust me" or hides a verdict inside a blockquote) and demonstrate that the system rejects them.
+4. **Report Unverified Claims:** Explicitly state what remains unverified or unknown. Do not describe a green CI run as proof of factual accuracy; CI only proves code structure, not live semantic behavior.
 
 ## Navigate
 1. Read `manifest.json` for the skill index.

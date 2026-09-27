@@ -31,6 +31,7 @@ jobs:
           pytest scripts/test_contract.py
           pytest scripts/test_safe_mass_tagger.py
           pytest scripts/test_lint_contract.py
+          pytest scripts/test_regression.py
 
       - name: Run Contract Linter
         run: |
